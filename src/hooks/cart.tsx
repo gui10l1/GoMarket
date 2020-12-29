@@ -30,22 +30,132 @@ const CartProvider: React.FC = ({ children }) => {
 
   useEffect(() => {
     async function loadProducts(): Promise<void> {
-      // TODO LOAD ITEMS FROM ASYNC STORAGE
+      // await AsyncStorage.clear();
+
+      const arrayOfProducts: Product[] = [];
+      const storagedKeys = await AsyncStorage.getAllKeys();
+      const storagedItems = await AsyncStorage.multiGet(storagedKeys);
+
+      storagedItems.forEach(item => {
+        if (item[1]) {
+          const parsedData = JSON.parse(item[1]);
+
+          arrayOfProducts.push(parsedData);
+        }
+      });
+
+      setProducts(arrayOfProducts);
     }
 
     loadProducts();
   }, []);
 
   const addToCart = useCallback(async product => {
-    // TODO ADD A NEW ITEM TO THE CART
+    const storagedItem = await AsyncStorage.getItem(
+      `@GoMarket:CartItem${product.id}`,
+    );
+
+    if (storagedItem) {
+      const parsedProduct = JSON.parse(storagedItem);
+
+      const quantity = parsedProduct.quantity + 1;
+
+      const cartProduct = {
+        id: product.id,
+        title: product.title,
+        image_url: product.image_url,
+        price: product.price,
+        quantity,
+      };
+
+      await AsyncStorage.mergeItem(
+        `@GoMarket:CartItem${product.id}`,
+        JSON.stringify(cartProduct),
+      );
+
+      setProducts(states => {
+        const updatedState = states.map(state => {
+          if (state.id === cartProduct.id) {
+            return cartProduct;
+          }
+          return state;
+        });
+
+        return updatedState;
+      });
+
+      return;
+    }
+
+    const cartProduct = {
+      id: product.id,
+      title: product.title,
+      image_url: product.image_url,
+      price: product.price,
+      quantity: 1,
+    };
+
+    setProducts(states => [...states, cartProduct]);
+
+    const parseProduct = JSON.stringify(cartProduct);
+
+    await AsyncStorage.setItem(`@GoMarket:CartItem${product.id}`, parseProduct);
   }, []);
 
   const increment = useCallback(async id => {
-    // TODO INCREMENTS A PRODUCT QUANTITY IN THE CART
+    const storagedItem = await AsyncStorage.getItem(`@GoMarket:CartItem${id}`);
+
+    if (storagedItem) {
+      const product = JSON.parse(storagedItem);
+
+      product.quantity += 1;
+
+      await AsyncStorage.mergeItem(
+        `@GoMarket:CartItem${id}`,
+        JSON.stringify(product),
+      );
+
+      setProducts(states => {
+        const uptadedState = states.map(state => {
+          if (state.id === id) {
+            return product;
+          }
+          return state;
+        });
+
+        return uptadedState;
+      });
+    }
   }, []);
 
   const decrement = useCallback(async id => {
-    // TODO DECREMENTS A PRODUCT QUANTITY IN THE CART
+    const storagedItem = await AsyncStorage.getItem(`@GoMarket:CartItem${id}`);
+
+    if (storagedItem) {
+      const product = JSON.parse(storagedItem);
+
+      if (product.quantity === 1) {
+        return;
+      }
+
+      product.quantity -= 1;
+
+      await AsyncStorage.mergeItem(
+        `@GoMarket:CartItem${id}`,
+        JSON.stringify(product),
+      );
+
+      setProducts(states => {
+        const uptadedState = states.map(state => {
+          if (state.id === id) {
+            return product;
+          }
+          return state;
+        });
+
+        return uptadedState;
+      });
+    }
   }, []);
 
   const value = React.useMemo(

@@ -39,3 +39,13 @@ export const CartButtonText = styled.Text`
   flex: 1;
   margin-right: auto;
 `;
+
+export const ActitivityContainer = styled.View`
+  width: 100%;
+  height: 60px;
+
+  align-items: center;
+  justify-content: center;
+
+  background-color: #e83f5b;
+`;
